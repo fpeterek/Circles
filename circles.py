@@ -74,18 +74,31 @@ class ImageProcessor:
                 biggest = circle
         print(biggest.diameter, "[", biggest.top.x, biggest.top.y, "] [", biggest.bottom.x, biggest.bottom.y, "]")
 
+        self.output_file()
+
     def output_file(self):
         output_name = filedialog.asksaveasfilename()
-        file = Image.open(output_name)
+
+        image_width = 0
+        for circle in self.circles:
+            image_width += circle.diameter + 10
+
+        image_height = self.circles[-1].diameter * 2 + 10
+
+        file = Image.new(mode="RGB", size=(image_width, image_height), color="white")
 
         output = ImageDraw.Draw(file)
 
         position = 0
-        for circle in self.circles:
-            output.ellipse([position, 0, circle.right.x, circle.bottom.y], circle.color)
-            position += circle.diameter + 20
 
-        final = Image.alpha_composite()
+        for circle in self.circles:
+            output.ellipse([position, 0, position + circle.diameter, circle.diameter], circle.color)
+            position += circle.diameter + 10
+
+        diameter = self.circles[-1].diameter
+        output.ellipse([0, diameter + 10, diameter, image_height], self.circles[-1].color)
+        file.show()
+        file.save(output_name + ".png")
 
     def get_adjacent(self, x, y, color):
 
@@ -124,13 +137,7 @@ class ImageProcessor:
     def add_circle(self, color, left, right, up, down):
         self.counter += 1
 
-        for index, tp in enumerate(self.colors):
-            counter, c = tp
-            if c == color:
-                self.colors[index] = (counter + 1, color)
-                return
-        self.colors.append((1, color))
-
+        # Add circle
         circle = Circle()
         circle.left = left
         circle.right = right
@@ -143,6 +150,14 @@ class ImageProcessor:
         circle.radius = circle.diameter / 2
 
         self.circles.append(circle)
+
+        # Add color
+        for index, tp in enumerate(self.colors):
+            counter, c = tp
+            if c == color:
+                self.colors[index] = (counter + 1, color)
+                return
+        self.colors.append((1, color))
 
     def circle(self, pixel):
         leftmost = pixel
@@ -183,12 +198,16 @@ def main():
 
     ip = ImageProcessor()
 
-    filename = filedialog.askopenfilename(initialdir=".",
-                                          title="Select image",
-                                          filetypes=(("PNG files", "*.png"), ("All files", "*")))
+    while True:
+        filename = filedialog.askopenfilename(initialdir=".",
+                                              title="Select image",
+                                              filetypes=(("PNG files", "*.png"), ("All files", "*")))
 
-    ip.open_file(filename)
-    ip.find_circles()
+        if not filename:
+            return
+
+        ip.open_file(filename)
+        ip.find_circles()
 
 
 if __name__ == '__main__':
