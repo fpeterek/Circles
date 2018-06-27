@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 from tkinter import filedialog
 
 
@@ -16,7 +16,7 @@ class Circle:
     bottom = Pixel()
     left = Pixel()
     right = Pixel()
-    color = Pixel()
+    color = (0, 0, 0)
     diameter = 0
     radius = 0
 
@@ -54,15 +54,38 @@ class ImageProcessor:
                 if r + g + b != 255 * 3:
                     self.circle(Pixel(x, y))
 
+        self.circles.sort(key=lambda circle: circle.diameter)
+        self.colors.sort(key=lambda color: (color[0], (color[1][0] << 16) + (color[1][1] << 8) + (color[1][2])),
+                         reverse=True)
+
+        self.output()
+
+    def output(self):
+
         print(self.counter, "circles found")
+
         for c in self.colors:
             counter, color = c
             print(color, ": ", counter)
+
         biggest = self.circles[0]
         for circle in self.circles:
             if circle.diameter > biggest.diameter:
-                biggest = circle.diameter
+                biggest = circle
         print(biggest.diameter, "[", biggest.top.x, biggest.top.y, "] [", biggest.bottom.x, biggest.bottom.y, "]")
+
+    def output_file(self):
+        output_name = filedialog.asksaveasfilename()
+        file = Image.open(output_name)
+
+        output = ImageDraw.Draw(file)
+
+        position = 0
+        for circle in self.circles:
+            output.ellipse([position, 0, circle.right.x, circle.bottom.y], circle.color)
+            position += circle.diameter + 20
+
+        final = Image.alpha_composite()
 
     def get_adjacent(self, x, y, color):
 
@@ -113,6 +136,8 @@ class ImageProcessor:
         circle.right = right
         circle.top = up
         circle.bottom = down
+
+        circle.color = color
 
         circle.diameter = circle.right.x - circle.left.x
         circle.radius = circle.diameter / 2
