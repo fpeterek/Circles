@@ -4,4 +4,4 @@ Soutěž v programování - skrvny
 
 ---
 
-Nedokončené
+Skoro dokončené
